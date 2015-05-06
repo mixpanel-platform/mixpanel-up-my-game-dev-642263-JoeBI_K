@@ -23,12 +23,14 @@
       <div id="unitSelect" style="float: left;"></div>
       <div id="unit" class="mixpanel-platform-label" style="margin-left: 10px;">type</div>
     </div>
-    <table id="resultsTable">
-      <tr>
-        <td><b>Activity</b></td>
-        <td>Count</td>
-      </tr>
-    </table>
+    <div>
+      <table id="resultsTable">
+        <tr>
+          <td><b>Activity</b></td>
+          <td>Count</td>
+        </tr>
+      </table>
+    </div>
     
     <script>
     
@@ -63,11 +65,10 @@
         };
     
     var queryNav = function() {
-      
       var dateRange = dateSelect.MPDatepicker('value'),
           interval = intervalPicker.MPSelect('value'),
           unit = unitPicker.MPSelect('value');
-          
+        
       params['from'] = dateRange.from.toISOString().substring(0, 10);
       params['to'] = dateRange.to.toISOString().substring(0, 10);
       params['unit'] = interval;
@@ -86,11 +87,8 @@
     
     var calculateResults = function(data) {
       promiselist = [];
-      console.log(data);
       var events = data[0].values();
       var segment = data[1].values();
-      console.log(events);
-      console.log(segment);
       promiselist.push(processResults(events['Video Play']));
       promiselist.push(processResults(events['Review Open']));
       promiselist.push(processResults(events['Record Video']));
@@ -107,7 +105,6 @@
         for(i=0; i<promiseArray.length; i++){
           total += promiseArray[i];
         }
-        console.log(promiseArray);
         $('table#resultsTable').append(
             '<tr>' +
             '<td>' + "" + '</td>' +
