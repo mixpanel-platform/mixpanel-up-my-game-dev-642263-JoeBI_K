@@ -65,6 +65,9 @@
         };
     
     var queryNav = function() {
+      
+      $("table#resultsTable tr").remove(); 
+      
       var dateRange = dateSelect.MPDatepicker('value'),
           interval = intervalPicker.MPSelect('value'),
           unit = unitPicker.MPSelect('value');
