@@ -110,6 +110,12 @@
         }
         $('table#resultsTable').append(
             '<tr>' +
+            '<td>' + "---" + '</td>' +
+            '<td>' + "---" + '</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
             '<td>' + "Video Watched" + '</td>' +
             '<td>' + promiseArray[0]/total*100 + '%</td>' +
             '</tr>'
