@@ -24,12 +24,7 @@
       <div id="unit" class="mixpanel-platform-label" style="margin-left: 10px;">type</div>
     </div>
     <div>
-      <table id="resultsTable">
-        <tr>
-          <td><b>Activity</b></td>
-          <td>Count</td>
-        </tr>
-      </table>
+      <table id="resultsTable"></table>
     </div>
     
     <script>
@@ -108,6 +103,12 @@
         for(i=0; i<promiseArray.length; i++){
           total += promiseArray[i];
         }
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Activity" + '</td>' +
+            '<td>' + "Count" + '</td>' +
+            '</tr>'
+          );
         $('table#resultsTable').append(
             '<tr>' +
             '<td>' + "---" + '</td>' +
