@@ -5,46 +5,205 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
     <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
+    <style>
+      table#resultsTable {
+        width: 100%; 
+        background-color: #f1f1c1;
+        border: 1;
+        align: center;
+      }
+    </style>
   </head>
   <body class="mixpanel-platform-body">
     <div class="mixpanel-platform-section">
-      <div id="eventSelect" style="float: left;"></div>
-      <div id="by" class="mixpanel-platform-label" style="margin-left: 10px; display: none;">by</div>
-      <div id="propSelect" style="float: left;"></div>
       <div id="dateSelect" style="float: right;"></div>
+      <div id="intervalSelect" style="float: left;"></div>
+      <div id="interval" class="mixpanel-platform-label" style="margin-left: 10px;">interval</div>
       <div style="clear: both;"></div>
-      <div id="graph"></div>
+      <div id="unitSelect" style="float: left;"></div>
+      <div id="unit" class="mixpanel-platform-label" style="margin-left: 10px;">type</div>
     </div>
-    <div id="table"></div>
+    <table id="resultsTable">
+      <tr>
+        <td><b>Activity</b></td>
+        <td>Count</td>
+      </tr>
+    </table>
+    
     <script>
-      var eventSelect = $('#eventSelect').MPEventSelect();
-      var propSelect  = $('#propSelect').MPPropertySelect();
-      var dateSelect  = $('#dateSelect').MPDatepicker();
-      var eventGraph  = $('#graph').MPChart({chartType: 'line'});
-      var eventTable  = $('#table').MPTable({
-        showPercentages: true,
-        firstColHeader: 'Event'
-      });
-
-      var runQuery = function() {
-        var eventName = eventSelect.MPEventSelect('value'),
-            propName  = propSelect.MPPropertySelect('value'),
-            dateRange = dateSelect.MPDatepicker('value');
-
-        if (eventName) {
-          MP.api.segment(eventName, propName, dateRange).done(function(results) {
-            eventGraph.MPChart('setData', results);
-            eventTable.MPTable('setData', results);
-          });
+    
+    var dateSelect  = $('#dateSelect').MPDatepicker();
+        
+    var options = {
+      items: [
+        {label: '-- Select unit --', value: 'day'},
+        {label: 'day', value: 'day'},
+        {label: 'week', value: 'week'},
+        {label: 'month', value: 'month'}
+      ]
+    };
+        
+    var intervalPicker = $('#intervalSelect').MPSelect(options);
+    
+    var options2 = {
+      items: [
+        {label: '-- Select type --', value: 'general'},
+        {label: 'totals', value: 'general'},
+        {label: 'unique', value: 'unique'}
+      ]
+    };
+    
+    var unitPicker = $('#unitSelect').MPSelect(options2);
+    
+    var params = {
+          from: '2015-01-01',
+          to: '2015-04-30',
+          type: 'general',
+          unit: 'month'
+        };
+    
+    var queryNav = function() {
+      
+      var dateRange = dateSelect.MPDatepicker('value'),
+          interval = intervalPicker.MPSelect('value'),
+          unit = unitPicker.MPSelect('value');
+          
+      params['from'] = dateRange.from.toISOString().substring(0, 10);
+      params['to'] = dateRange.to.toISOString().substring(0, 10);
+      params['unit'] = interval;
+      params['type'] = unit;
+      
+      promiselist = [];
+      if(dateRange && interval && unit) {
+        promiselist.push(MP.api.events("Video Play", "Review Open", "Record Video", "Share Video", "Comment", "Review Request", "Sign Up", "Review", "Pulse", params).done(function(results){ return results.values(); }));
+        promiselist.push(MP.api.segment("Review", "Role", params).done(function(results){ return results.values(); }));
+        
+        Promise.all(promiselist).then(function(promiseArray){
+          calculateResults(promiseArray);
+        });
+      }
+    }
+    
+    var calculateResults = function(data) {
+      promiselist = [];
+      console.log(data);
+      var events = data[0].values();
+      var segment = data[1].values();
+      console.log(events);
+      console.log(segment);
+      promiselist.push(processResults(events['Video Play']));
+      promiselist.push(processResults(events['Review Open']));
+      promiselist.push(processResults(events['Record Video']));
+      promiselist.push(processResults(events['Share Video']));
+      promiselist.push(processResults(events['Comment']));
+      promiselist.push(processResults(segment['Reviewer']));
+      promiselist.push(processResults(events['Review Request']));
+      promiselist.push(processResults(events['Sign Up']));
+      promiselist.push(processResults(events['Review']));
+      promiselist.push(processResults(events['Pulse']));
+      
+      Promise.all(promiselist).then(function(promiseArray){
+        var total = 0;
+        for(i=0; i<promiseArray.length; i++){
+          total += promiseArray[i];
         }
-      };
-      eventSelect.on('change', function(e, eventName) {
-        propSelect.MPPropertySelect('setEvent', eventName);
-        $("#by").show();
-        runQuery();
+        console.log(promiseArray);
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Video Watched" + '</td>' +
+            '<td>' + promiseArray[0]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Review Watched" + '</td>' +
+            '<td>' + promiseArray[1]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Video Recorded" + '</td>' +
+            '<td>' + promiseArray[2]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Video Shared" + '</td>' +
+            '<td>' + promiseArray[3]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Comment Posted" + '</td>' +
+            '<td>' + promiseArray[4]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Review Posted" + '</td>' +
+            '<td>' + promiseArray[5]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Paid for Review" + '</td>' +
+            '<td>' + promiseArray[6]/total + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "" + '</td>' +
+            '<td>' + "" + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Active Posters" + '</td>' +
+            '<td>' + promiseArray[3] + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Active Commenters" + '</td>' +
+            '<td>' + promiseArray[4] + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "New Accounts" + '</td>' +
+            '<td>' + promiseArray[7] + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Active Reviewers" + '</td>' +
+            '<td>' + promiseArray[8] + '%</td>' +
+            '</tr>'
+          );
+        $('table#resultsTable').append(
+            '<tr>' +
+            '<td>' + "Active Users" + '</td>' +
+            '<td>' + promiseArray[9] + '%</td>' +
+            '</tr>'
+          );
       });
-      propSelect.on('change', runQuery);
-      dateSelect.on('change', runQuery);
+    }
+    
+    var processResults = function(input) {
+      var total = 0;
+      var keys = Object.keys(input);
+      for(i=0; i<keys.length; i++) {
+        total += parseInt(input[keys[i]]);
+      }
+      return total;
+    }
+    
+    queryNav();
+    
+    intervalPicker.on('change', queryNav);
+    unitPicker.on('change', queryNav);
+    dateSelect.on('change', queryNav);
+     
     </script>
   </body>
 </html>
