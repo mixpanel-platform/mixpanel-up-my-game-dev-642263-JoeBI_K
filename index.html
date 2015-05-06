@@ -38,7 +38,7 @@
         
     var options = {
       items: [
-        {label: '-- Select unit --', value: 'day'},
+        {label: '-- Select unit --', value: '0'},
         {label: 'day', value: 'day'},
         {label: 'week', value: 'week'},
         {label: 'month', value: 'month'}
@@ -49,7 +49,7 @@
     
     var options2 = {
       items: [
-        {label: '-- Select type --', value: 'general'},
+        {label: '-- Select type --', value: '0'},
         {label: 'totals', value: 'general'},
         {label: 'unique', value: 'unique'}
       ]
@@ -78,7 +78,7 @@
       params['type'] = unit;
       
       promiselist = [];
-      if(dateRange && interval && unit) {
+      if(dateRange && interval!=0 && unit !=0) {
         promiselist.push(MP.api.events("Video Play", "Review Open", "Record Video", "Share Video", "Comment", "Review Request", "Sign Up", "Review", "Pulse", params).done(function(results){ return results.values(); }));
         promiselist.push(MP.api.segment("Review", "Role", params).done(function(results){ return results.values(); }));
         
